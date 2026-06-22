@@ -77,7 +77,7 @@ if 'visited' not in st.session_state:
                 <div class="leaf" style="left: 15%; animation-delay: 0s;">🍃</div>
                 <div class="leaf" style="left: 80%; animation-delay: 1.5s;">🍃</div>
                 <div class="main-icons">🪷 🧬</div>
-                <div class="lotus-text">CHÀO MỪNG ĐẾN HỆ THỐNG ALKALOTUS PREDICTOR</div>
+                <div class="lotus-text">NỀN TẢNG TIN SINH HỌC TÍCH HỢP DỮ LIỆU VÀ MÔ PHỎNG ĐỘNG HỌC ALKALOTUS PREDICTOR</div>
             </div>
             """, 
             unsafe_allow_html=True 
@@ -88,6 +88,8 @@ if 'visited' not in st.session_state:
 
 
 st.title("🪷 AlkaLotus Predictor")
+st.markdown("<p style='font-size: 1.15em; color: #555; font-style: italic; margin-top: -15px; line-height: 1.4;'>Nền tảng tin sinh học tích hợp dữ liệu và mô phỏng động học chiết tách Alkaloid lá sen hướng đích enzyme AChE và BACE1 trong điều trị Alzheimer</p>", unsafe_allow_html=True)
+st.divider()
 
 # --- 4. KHỞI TẠO DỮ LIỆU ---
 try:
@@ -638,4 +640,4 @@ elif page == "6. Động học Chiết tách (Toán)":
         
         st.markdown("### 📋 Phân tích kết quả mô phỏng:")
         st.info(f"⏳ **Thời gian tối ưu:** Dựa trên hằng số vận tốc thực nghiệm, hệ thống tính toán quá trình chiết tách đạt **90%** độ bão hòa tại thời điểm **{int(t_90)} phút**.")
-        st.success(f"💡 **Khuyến nghị:** Ông nên dừng quá trình ngâm khuấy hoặc thực hiện thay mẻ dung môi mới sau **{int(t_90 + 10)} phút** để tối ưu hóa thời gian vận hành máy móc và tránh làm phân hủy các Alkaloid nhạy cảm với nhiệt!")
+        st.success(f"💡 **Khuyến nghị:** Bạn nên dừng quá trình ngâm khuấy hoặc thực hiện thay mẻ dung môi mới sau **{int(t_90 + 10)} phút** để tối ưu hóa thời gian vận hành máy móc và tránh làm phân hủy các Alkaloid nhạy cảm với nhiệt!")
