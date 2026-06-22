@@ -143,7 +143,7 @@ st.sidebar.markdown("</div>", unsafe_allow_html=True)
 st.sidebar.divider()
 
 st.sidebar.title("🪷 ALKALOTUS PREDICTOR")
-st.sidebar.markdown("<div style='text-align: justify; font-size: 0.9em;'><b>Hệ thống tích hợp Machine Learning</b> để tối ưu hóa quy trình sàng lọc ảo và dự đoán dược tính.</div>", unsafe_allow_html=True)
+st.sidebar.markdown("<div style='text-align: justify; font-size: 0.9em;'><b>Nền tảng tin sinh học</b>  tích hợp dữ liệu và mô phỏng động học chiết tách Alkaloid lá sen hướng đích enzyme AChE và BACE1 trong điều trị Alzheimer.</div>", unsafe_allow_html=True)
 
 st.sidebar.divider()
 page = st.sidebar.radio(
