@@ -499,18 +499,25 @@ elif page == "4. Phân tích Cấu trúc (Toán)":
         "Liensinine": "COC1=CC=C(C=C1)CC2CCC3=C(C2)C=CC(=C3)OC4=CC=C(C=C4)CC5CCC6=C(C5)C(=CC(=C6)O)OC"
     }
 
-    # 3. Xử lý thuật toán
-    mols = {name: Chem.MolFromSmiles(smi) for name, smi in alkaloids.items()}
-    fps = {name: AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=1024) for name, mol in mols.items()}
+    # 3. Xử lý thuật toán có kiểm tra lỗi (Robust processing)
+    fps = {}
+    valid_names = []
+    
+    for name, smi in alkaloids.items():
+        mol = Chem.MolFromSmiles(smi)
+        if mol is not None:  # CHỈ tính toán nếu phân tử hợp lệ
+            fps[name] = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=1024)
+            valid_names.append(name)
+        else:
+            st.error(f"Lỗi đọc cấu trúc: {name}")
 
-    # 4. Tính toán ma trận tương đồng
-    names = list(fps.keys())
-    matrix = np.zeros((len(names), len(names)))
-    for i in range(len(names)):
-        for j in range(len(names)):
-            matrix[i, j] = DataStructs.TanimotoSimilarity(fps[names[i]], fps[names[j]])
+    # 4. Tính toán ma trận với danh sách đã lọc
+    matrix = np.zeros((len(valid_names), len(valid_names)))
+    for i in range(len(valid_names)):
+        for j in range(len(valid_names)):
+            matrix[i, j] = DataStructs.TanimotoSimilarity(fps[valid_names[i]], fps[valid_names[j]])
 
-    df_matrix = pd.DataFrame(matrix, index=names, columns=names)
+    df_matrix = pd.DataFrame(matrix, index=valid_names, columns=valid_names)
 
     # 5. Trực quan hóa bằng Heatmap
     st.subheader("📊 Ma trận tương đồng Tanimoto")
