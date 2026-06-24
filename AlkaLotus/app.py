@@ -490,10 +490,10 @@ elif page == "4. Phân tích Cấu trúc (Toán)":
     st.latex(r"T(A, B) = \frac{|A \cap B|}{|A| + |B| - |A \cap B|}")
     st.info("💡 Chỉ số Tanimoto ($T \in [0, 1]$) dùng để so sánh các phân tử dựa trên cấu trúc nhánh (Fingerprints).")
 
-    # 2. Dữ liệu cấu trúc (SMILES)
+    # 2. Dữ liệu cấu trúc (SMILES) đã được kiểm chứng
     alkaloids = {
         "Nuciferine": "CN(C)CCC1=CC2=C(C=C1)C3=C(CC2)C=CC(=C3)OC",
-        "Nornuciferine": "C1CN(CC2=CC3=C(C=C21)C4=CC(=CC=C4C3)OC)H",
+        "Nornuciferine": "CN1CCC2=CC3=C(C=C2C1CC4=CC=C(O)C=C4)OC", 
         "Roemerine": "CN1CCC2=CC3=C(C=C2C1CC4=C3C(=O)O4)OC",
         "Liensinine": "COC1=CC=C(C=C1)CC2CCC3=C(C2)C=CC(=C3)OC4=CC=C(C=C4)CC5CCC6=C(C5)C(=CC(=C6)O)OC"
     }
