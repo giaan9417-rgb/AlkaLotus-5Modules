@@ -611,37 +611,31 @@ elif page == "6. Động học Chiết tách (Toán)":
     st.title("📈 Mô phỏng Động học & Vận tốc Chiết tách")
     st.markdown("Sử dụng mô hình **Pseudo-second-order** để tối ưu hóa thời gian chiết xuất dược liệu.")
 
-    # 1. Cấu hình thông số thực nghiệm (Sidebar cho gọn)
+    # 1. Cấu hình thông số thực nghiệm (Sidebar)
     st.sidebar.markdown("---")
     st.sidebar.subheader("⚙️ Cài đặt thực nghiệm")
     qe = st.sidebar.slider("Dung lượng tối đa (Qe - mg/g):", 5.0, 100.0, 25.0)
     k2 = st.sidebar.slider("Hằng số vận tốc (k2 - g/mg.phút):", 0.001, 0.05, 0.015, step=0.001)
 
     # 2. Xử lý thuật toán
-    time_steps = np.linspace(0, 200, 200)
-    # Phương trình Pseudo-second-order
+    time_steps = np.linspace(0, 200, 100) # Giảm số bước để bảng hiện vừa đủ, không quá dài
     qt = (k2 * (qe ** 2) * time_steps) / (1 + k2 * qe * time_steps)
-    # Vận tốc tức thời (Đạo hàm bậc 1 của qt theo t)
     velocity = (k2 * (qe**2)) / ((1 + k2 * qe * time_steps)**2)
 
-    # 3. Dashboard kết quả
+    # 3. Dashboard hiển thị các thông số cốt lõi
     col1, col2, col3 = st.columns(3)
     t_90 = 9 / (k2 * qe)
     col1.metric("Tốc độ ban đầu", f"{velocity[0]:.3f} mg/g.p")
     col2.metric("Thời gian đạt 90% (t90)", f"{int(t_90)} phút")
     col3.metric("Trạng thái", "Hiệu quả" if t_90 < 120 else "Chậm")
 
-    # 4. Đồ thị kết hợp (Qt và Vận tốc)
+    # 4. Đồ thị trực quan
     fig = px.line(x=time_steps, y=qt, labels={'x': 'Thời gian (phút)', 'y': 'Nồng độ chiết (mg/g)'}, 
                   title="Đường cong động học Pseudo-second-order")
     fig.add_hline(y=qe, line_dash="dash", line_color="red", annotation_text="Giới hạn bão hòa (Qe)")
     st.plotly_chart(fig, use_container_width=True)
 
-    # 5. Phân tích dữ liệu & Bảng chi tiết
-    with st.expander("📊 Xem bảng dữ liệu chi tiết"):
-        df_display = pd.DataFrame({"Thời gian (phút)": time_steps, "Nồng độ (mg/g)": qt})
-        st.dataframe(df_display.style.format({"Nồng độ (mg/g)": "{:.3f}"}), use_container_width=True)
-
+    # 5. Phân tích chuyên sâu
     st.subheader("💡 Phân tích chiến lược")
     efficiency = qt / qe
     time_to_80 = time_steps[np.searchsorted(efficiency, 0.8)]
@@ -652,11 +646,11 @@ elif page == "6. Động học Chiết tách (Toán)":
     - **Giải thích khoa học:** Việc tiếp tục chiết sau thời điểm này tiêu tốn năng lượng vận hành máy khuấy nhưng chỉ làm tăng <5% nồng độ hoạt chất.
     """)
 
-    # 6. Nút xuất file (Xuất ra CSV sạch)
-    csv_data = df_display.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        label="📥 Tải xuống dữ liệu mô phỏng (.csv)",
-        data=csv_data,
-        file_name='ket_qua_dong_hoc.csv',
-        mime='text/csv',
-    )
+    # 6. Bảng hiển thị dữ liệu (Đã định dạng sạch sẽ)
+    st.subheader("📋 Bảng dữ liệu mô phỏng chi tiết")
+    df_display = pd.DataFrame({
+        "Thời gian (phút)": time_steps, 
+        "Nồng độ (mg/g)": qt
+    })
+    # Hiển thị bảng với format số thập phân gọn gàng
+    st.dataframe(df_display.style.format({"Nồng độ (mg/g)": "{:.4f}"}), use_container_width=True)
