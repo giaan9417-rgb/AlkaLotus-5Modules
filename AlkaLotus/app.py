@@ -607,47 +607,50 @@ elif page == "5. Tối ưu Dung môi (Toán)":
                 st.success(f"🎉 **Tối ưu:** Tỷ lệ này cực kỳ phù hợp để chiết xuất {target_alkaloid}!")
             elif score < 40:
                 st.error("⚠️ **Cần điều chỉnh:** Dung môi hiện tại quá xa so với mục tiêu. Hãy thử thay đổi tỷ lệ hoặc loại dung môi khác.")
-# ==================== MODULE 6: MÔ PHỎNG ĐỘNG HỌC CHIẾT TÁCH (TOÁN ĐỒ THỊ) ====================
 elif page == "6. Động học Chiết tách (Toán)":
     st.title("📈 Mô phỏng Động học & Vận tốc Chiết tách")
-    st.caption("Ứng dụng toán vi phân/hàm số mũ để mô phỏng nồng độ Alkaloid thu được theo thời gian thực.")
+    
+    # 1. Cấu hình thông số nâng cao
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("⚙️ Cài đặt thực nghiệm")
+    qe = st.sidebar.slider("Dung lượng tối đa (Qe - mg/g):", 5.0, 100.0, 25.0)
+    k2 = st.sidebar.slider("Hằng số vận tốc (k2 - g/mg.phút):", 0.001, 0.05, 0.015, step=0.001)
 
-    st.markdown("### 🎛️ Cấu hình thông số thực nghiệm phòng thí nghiệm")
-    st.write("Điều chỉnh các thông số dưới đây để xem sự thay đổi của đường cong chiết tách:")
+    # 2. Xử lý thuật toán
+    time_steps = np.linspace(0, 200, 200)
+    qt = (k2 * (qe ** 2) * time_steps) / (1 + k2 * qe * time_steps)
+    
+    # Tính vận tốc chiết (đạo hàm bậc 1)
+    velocity = (k2 * (qe**2)) / ((1 + k2 * qe * time_steps)**2)
 
+    # 3. Hiển thị Dashboard
     col1, col2 = st.columns(2)
     with col1:
-        # Nồng độ bão hòa tối đa lý thuyết (mg hoạt chất / g lá sen khô)
-        qe = st.number_input("1. Dung lượng chiết tối đa lý thuyết (Qe - mg/g):", min_value=1.0, max_value=100.0, value=25.0)
+        st.metric("Tốc độ chiết ban đầu", f"{velocity[0]:.3f} mg/g.phút")
     with col2:
-        # Hằng số vận tốc chiết (tăng lên nếu có khuấy từ mạnh hoặc gia nhiệt tăng nhiệt độ)
-        k2 = st.slider("2. Hằng số vận tốc chiết (k2 - g/mg.phút):", min_value=0.001, max_value=0.100, value=0.015, step=0.001)
-
-    # Khởi tạo trục thời gian từ 0 đến 180 phút (chia làm 100 bước để vẽ đồ thị mượt)
-    time_steps = np.linspace(0, 180, 100)
-
-    # Thuật toán động học Pseudo-second-order: Qt = (k2 * Qe^2 * t) / (1 + k2 * Qe * t)
-    qt_values = (k2 * (qe ** 2) * time_steps) / (1 + k2 * qe * time_steps)
-
-    if st.button("📊 KÍCH HOẠT MÔ PHỎNG TIẾN TRÌNH", use_container_width=True):
-        # Đóng gói dữ liệu vào DataFrame
-        df_kinetics = pd.DataFrame({
-            "Thời gian (Phút)": time_steps,
-            "Nồng độ chiết được (mg/g)": qt_values
-        })
-
-        # Vẽ đường cong động học bằng Plotly
-        fig = px.line(df_kinetics, x="Thời gian (Phút)", y="Nồng độ chiết được (mg/g)",
-                      title="Đường cong Động học Chiết tách Alkaloid theo Thời gian",
-                      color_discrete_sequence=["#FF4B4B"], template="plotly_white")
-        
-        # Thêm đường nét đứt biểu diễn giới hạn bão hòa tối đa Qe
-        fig.add_hline(y=qe, line_dash="dash", line_color="red", annotation_text="Giới hạn bão hòa tối đa (Qe)")
-        st.plotly_chart(fig, use_container_width=True)
-
-        # Tính toán thời điểm phân tử đạt 90% trạng thái bão hòa (t_90 = 9 / (k2 * Qe))
         t_90 = 9 / (k2 * qe)
-        
-        st.markdown("### 📋 Phân tích kết quả mô phỏng:")
-        st.info(f"⏳ **Thời gian tối ưu:** Dựa trên hằng số vận tốc thực nghiệm, hệ thống tính toán quá trình chiết tách đạt **90%** độ bão hòa tại thời điểm **{int(t_90)} phút**.")
-        st.success(f"💡 **Khuyến nghị:** Bạn nên dừng quá trình ngâm khuấy hoặc thực hiện thay mẻ dung môi mới sau **{int(t_90 + 10)} phút** để tối ưu hóa thời gian vận hành máy móc và tránh làm phân hủy các Alkaloid nhạy cảm với nhiệt!")
+        st.metric("Thời gian đạt 90% (t90)", f"{int(t_90)} phút")
+
+    # 4. Đồ thị kết hợp (Qt và Vận tốc)
+    fig = px.line(x=time_steps, y=qt, labels={'x': 'Thời gian (phút)', 'y': 'Nồng độ (mg/g)'}, 
+                  title="Đường cong động học Pseudo-second-order")
+    fig.add_hline(y=qe, line_dash="dash", line_color="red", annotation_text="Giới hạn bão hòa (Qe)")
+    st.plotly_chart(fig, use_container_width=True)
+
+    # 5. Phân tích thông minh (Insight)
+    st.subheader("💡 Phân tích chiến lược chiết tách")
+    
+    # Tính hiệu suất tiêu tốn thời gian
+    efficiency = qt / qe
+    time_to_80 = time_steps[np.searchsorted(efficiency, 0.8)]
+    
+    st.markdown(f"""
+    - **Giai đoạn tăng trưởng nhanh:** Từ 0 đến {int(time_to_80)} phút, tốc độ hòa tan đạt hiệu suất cao nhất.
+    - **Giai đoạn bão hòa:** Sau {int(t_90)} phút, tốc độ chiết giảm dần. 
+    - **Khuyến nghị vận hành:** Nên dừng chiết tại **{int(t_90 + 15)} phút**. Việc kéo dài thời gian sau đó không mang lại hiệu quả kinh tế đáng kể (hiệu suất < 5% tăng thêm).
+    """)
+
+    # Nút xuất thông số mô phỏng
+    if st.button("📥 Xuất dữ liệu mô phỏng (.csv)"):
+        df_export = pd.DataFrame({"Thời gian": time_steps, "Nồng độ": qt})
+        st.download_button("Tải file", df_export.to_csv(), "kinetics_data.csv", "text/csv")
