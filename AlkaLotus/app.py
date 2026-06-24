@@ -477,19 +477,18 @@ phát triển các liệu pháp điều trị Alzheimer từ thảo dược tự
     }
     st.table(pd.DataFrame(real_data))
 
-# --- MODULE 4: PHÂN TÍCH CẤU TRÚC & TỐI ƯU LỘ TRÌNH (THUẦN GIẢI THUẬT) ---
 # ==================== MODULE 4: PHÂN TÍCH CẤU TRÚC (TANIMOTO) ====================
 elif page == "4. Phân tích Cấu trúc (Toán)":
     from rdkit import Chem
     from rdkit import DataStructs
     from rdkit.Chem import AllChem
 
+    st.title("🧬 Phân tích Cấu trúc Phân tử")
+    st.caption("Ứng dụng thuật toán **Tanimoto Similarity** và **Morgan Fingerprints** để định danh cấu trúc.")
 
-    st.caption("Ứng dụng thuật toán **Tanimoto Similarity** và **Morgan Fingerprints** để định danh cấu trúc phân tử.")
-
-    # 1. Cơ sở lý thuyết khoa học
+    # 1. Cơ sở lý thuyết
     st.latex(r"T(A, B) = \frac{|A \cap B|}{|A| + |B| - |A \cap B|}")
-    st.info("💡 **Biện luận:** Chỉ số Tanimoto ($T \in [0, 1]$) dùng để so sánh các phân tử dựa trên cấu trúc nhánh (Fingerprints). $T > 0.7$ chỉ ra sự tương đồng cao về nhóm dược lý (Pharmacophore).")
+    st.info("💡 Chỉ số Tanimoto ($T \in [0, 1]$) dùng để so sánh các phân tử dựa trên cấu trúc nhánh (Fingerprints).")
 
     # 2. Dữ liệu cấu trúc (SMILES)
     alkaloids = {
@@ -499,37 +498,42 @@ elif page == "4. Phân tích Cấu trúc (Toán)":
         "Liensinine": "COC1=CC=C(C=C1)CC2CCC3=C(C2)C=CC(=C3)OC4=CC=C(C=C4)CC5CCC6=C(C5)C(=CC(=C6)O)OC"
     }
 
-    # 3. Xử lý thuật toán có kiểm tra lỗi (Robust processing)
+    # 3. Xử lý thuật toán có kiểm tra lỗi
     fps = {}
     valid_names = []
     
     for name, smi in alkaloids.items():
         mol = Chem.MolFromSmiles(smi)
-        if mol is not None:  # CHỈ tính toán nếu phân tử hợp lệ
+        if mol is not None:
             fps[name] = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=1024)
             valid_names.append(name)
         else:
             st.error(f"Lỗi đọc cấu trúc: {name}")
 
-    # 4. Tính toán ma trận với danh sách đã lọc
-    matrix = np.zeros((len(valid_names), len(valid_names)))
-    for i in range(len(valid_names)):
-        for j in range(len(valid_names)):
-            matrix[i, j] = DataStructs.TanimotoSimilarity(fps[valid_names[i]], fps[valid_names[j]])
+    if len(valid_names) > 1:
+        # 4. Tính toán ma trận
+        matrix = np.zeros((len(valid_names), len(valid_names)))
+        for i in range(len(valid_names)):
+            for j in range(len(valid_names)):
+                matrix[i, j] = DataStructs.TanimotoSimilarity(fps[valid_names[i]], fps[valid_names[j]])
 
-    df_matrix = pd.DataFrame(matrix, index=valid_names, columns=valid_names)
+        df_matrix = pd.DataFrame(matrix, index=valid_names, columns=valid_names)
 
-    # 5. Trực quan hóa bằng Heatmap
-    st.subheader("📊 Ma trận tương đồng Tanimoto")
-    fig = px.imshow(df_matrix, text_auto=".2f", color_continuous_scale="Greens",
-                    title="Heatmap cấu trúc phân tử (Độ tương đồng 0-1)")
-    st.plotly_chart(fig, use_container_width=True)
+        # 5. Trực quan hóa
+        st.subheader("📊 Ma trận tương đồng Tanimoto")
+        fig = px.imshow(df_matrix, text_auto=".2f", color_continuous_scale="Greens")
+        st.plotly_chart(fig, use_container_width=True)
 
-    # 6. Biện luận chuyên sâu
-    st.markdown("### 🔍 Phân tích định hướng (SAR Analysis):")
-    max_sim = df_matrix.values[np.triu_indices(len(names), k=1)].max()
-    st.write(f"- Độ tương đồng cao nhất ghi nhận được: **{max_sim:.2f}**.")
-    st.success("Kết quả ma trận khẳng định cấu trúc các hợp chất trong thư viện có sự bảo tồn Pharmacophore, giúp duy trì khả năng ức chế enzyme tương tự nhau.")
+        # 6. Biện luận
+        st.markdown("### 🔍 Phân tích định hướng (SAR Analysis):")
+        # Tính max trên tam giác trên (loại bỏ đường chéo 1.0)
+        upper_tri_indices = np.triu_indices(len(valid_names), k=1)
+        if len(upper_tri_indices[0]) > 0:
+            max_sim = matrix[upper_tri_indices].max()
+            st.write(f"- Độ tương đồng cao nhất ghi nhận được: **{max_sim:.2f}**.")
+            st.success("Cấu trúc các hợp chất có sự bảo tồn Pharmacophore, giúp duy trì khả năng ức chế enzyme.")
+    else:
+        st.warning("Không đủ dữ liệu hợp lệ để tính toán ma trận.")
 
 
 # ==================== MODULE 5: TỐI ƯU DUNG MÔI CHIẾT TÁCH (TOÁN 3D) ====================
