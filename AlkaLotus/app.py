@@ -536,70 +536,73 @@ elif page == "4. Phân tích Cấu trúc (Toán)":
         st.warning("Không đủ dữ liệu hợp lệ để tính toán ma trận.")
 
 
-# ==================== MODULE 5: TỐI ƯU DUNG MÔI CHIẾT TÁCH (TOÁN 3D) ====================
 elif page == "5. Tối ưu Dung môi (Toán)":
-    st.title("🧪 Hệ thống Tối ưu hóa Dung môi Chiết tách Alkaloid")
-    st.caption("Ứng dụng **Khoảng cách Không gian 3D (Hansen Parameters)** để tìm hỗn hợp dung môi tối ưu nhất.")
+    st.title("🧪 Hệ thống Tối ưu hóa Dung môi Hansen")
+    st.markdown("Sử dụng **Khoảng cách Hansen (Hansen Solubility Parameters - HSP)** để dự đoán độ tan Alkaloid trong hỗn hợp dung môi đa thành phần.")
 
-    st.write("Chọn mục tiêu chất cần chiết xuất và cấu hình tỷ lệ dung môi phòng thí nghiệm của bạn:")
-
-    # 1. Lựa chọn Alkaloid mục tiêu cần chiết tách
-    target_alkaloid = st.selectbox("1. Chọn Alkaloid bạn muốn chiết tách:", ["Nuciferine", "Roemerine", "Liensinine"])
-
-    # Tọa độ không gian độ tan (Dispersion, Polar, Hydrogen bonding) theo lý thuyết Hansen
-    target_coords = {
-        "Nuciferine": {"dD": 18.5, "dP": 6.2, "dH": 5.1},
-        "Roemerine":  {"dD": 18.2, "dP": 5.8, "dH": 4.8},
-        "Liensinine":  {"dD": 19.1, "dP": 8.5, "dH": 12.3}
+    # 1. Cơ sở dữ liệu dung môi mở rộng
+    solvents = {
+        "Ethanol": [15.8, 8.8, 19.4],
+        "Nước": [15.5, 16.0, 42.3],
+        "Acetone": [15.5, 10.4, 7.0],
+        "Methanol": [14.7, 12.3, 22.3],
+        "Ethyl Acetate": [15.8, 5.3, 7.2]
     }
+
+    target_alkaloid = st.selectbox("Chọn Alkaloid mục tiêu:", ["Nuciferine", "Roemerine", "Liensinine"])
+    target_coords = {"Nuciferine": [18.5, 6.2, 5.1], "Roemerine": [18.2, 5.8, 4.8], "Liensinine": [19.1, 8.5, 12.3]}
+    t_hsp = target_coords[target_alkaloid]
+
+    # 2. Cấu hình hỗn hợp dung môi
+    st.subheader("🎛️ Thiết lập hỗn hợp dung môi")
+    col_a, col_b = st.columns([1, 1])
+    with col_a:
+        sel_sols = st.multiselect("Chọn dung môi trong hỗn hợp:", list(solvents.keys()), default=["Ethanol", "Nước"])
     
-    alk_c = target_coords[target_alkaloid]
-    st.info(f"📍 Tọa độ Hansen của **{target_alkaloid}**: $\delta_D$ = {alk_c['dD']}, $\delta_P$ = {alk_c['dP']}, $\delta_H$ = {alk_c['dH']}")
+    weights = {}
+    if sel_sols:
+        for s in sel_sols:
+            weights[s] = st.slider(f"Tỷ lệ {s} (%)", 0, 100, int(100/len(sel_sols)))
+        
+        # Chuẩn hóa nếu tổng > 100
+        total = sum(weights.values())
+        if total > 0:
+            weights = {k: v/total for k, v in weights.items()}
+            
+            # Tính tọa độ hỗn hợp
+            mix_hsp = np.zeros(3)
+            for s, w in weights.items():
+                mix_hsp += np.array(solvents[s]) * w
+            
+            # 3. Tính toán Khoảng cách Hansen (Ra)
+            # Ra^2 = 4(dD2-dD1)^2 + (dP2-dP1)^2 + (dH2-dH1)^2
+            dist = np.sqrt(4*(mix_hsp[0]-t_hsp[0])**2 + (mix_hsp[1]-t_hsp[1])**2 + (mix_hsp[2]-t_hsp[2])**2)
+            score = max(0, 100 - (dist * 2)) # Công thức heuristic
 
-    # 2. Thanh trượt thiết kế cấu hình tỷ lệ hỗn hợp dung môi phòng thí nghiệm
-    st.markdown("### 🎛️ Cấu hình tỷ lệ hỗn hợp Dung môi (Tổng phải bằng 100%)")
-    
-    sol_a = st.slider("Tỷ lệ Ethanol (%)", min_value=0, max_value=100, value=70)
-    sol_b = st.slider("Tỷ lệ Nước cất (%)", min_value=0, max_value=100 - sol_a, value=100 - sol_a)
-    sol_c = 100 - sol_a - sol_b
-    
-    st.warning(f"🧪 **Hỗn hợp hiện tại:** {sol_a}% Ethanol | {sol_b}% Nước | {sol_c}% Acetone")
+            # 4. Trực quan hóa
+            st.divider()
+            c1, c2 = st.columns(2)
+            c1.metric("Khoảng cách Ra", f"{dist:.2f}", help="Ra càng nhỏ, độ tan càng cao")
+            c2.metric("Chỉ số hòa tan", f"{score:.1f}%")
 
-    if st.button("📊 TÍNH TOÁN HIỆU SUẤT CHIẾT TÁCH", use_container_width=True):
-        # Tọa độ Hansen của từng loại dung môi nguyên chất [dD, dP, dH]
-        ethanol = np.array([15.8, 8.8, 19.4])
-        water = np.array([15.5, 16.0, 42.3])
-        acetone = np.array([15.5, 10.4, 7.0])
+            # 5. Đồ thị 3D Hansen
+            chart_df = pd.DataFrame({
+                "Loại": ["Mục tiêu"] + sel_sols,
+                "dD": [t_hsp[0]] + [solvents[s][0] for s in sel_sols],
+                "dP": [t_hsp[1]] + [solvents[s][1] for s in sel_sols],
+                "dH": [t_hsp[2]] + [solvents[s][2] for s in sel_sols]
+            })
+            
+            fig = px.scatter_3d(chart_df, x="dD", y="dP", z="dH", color="Loại", 
+                                symbol="Loại", size_max=10, opacity=0.7)
+            st.plotly_chart(fig, use_container_width=True)
 
-        # Tính toán tọa độ trung bình của hỗn hợp dựa trên tỷ lệ % người dùng kéo
-        mix_dD = (sol_a * ethanol[0] + sol_b * water[0] + sol_c * acetone[0]) / 100
-        mix_dP = (sol_a * ethanol[1] + sol_b * water[1] + sol_c * acetone[1]) / 100
-        mix_dH = (sol_a * ethanol[2] + sol_b * water[2] + sol_c * acetone[2]) / 100
-
-        # Công thức tính Khoảng cách Độ tan Hansen (Ra) hình học giải tích không gian 3D
-        distance = np.sqrt(
-            4 * (mix_dD - alk_c["dD"])**2 + 
-            (mix_dP - alk_c["dP"])**2 + 
-            (mix_dH - alk_c["dH"])**2
-        )
-
-        # Chuẩn hóa khoảng cách hình học thành hiệu suất % (Càng gần nhau -> Độ tan càng cao)
-        efficiency = max(0, min(100, (1 - (distance / 30)) * 100))
-
-        st.markdown("### 📉 Kết quả phân tích toán học:")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric(label="Khoảng cách Hansen (Ra)", value=f"{round(distance, 2)}")
-        with col2:
-            st.metric(label="Hiệu suất hòa tan ước tính", value=f"{round(efficiency, 1)}%")
-
-        # Hệ thống phản hồi thông minh đưa ra giải pháp thực nghiệm
-        if efficiency > 75:
-            st.success("🎉 **Tỷ lệ tuyệt vời!** Hỗn hợp dung môi này cực kỳ phù hợp, khả năng hòa tan chất mục tiêu rất cao, giúp ông tiết kiệm hóa chất khi chiết thực tế.")
-        elif efficiency > 50:
-            st.warning("⚠️ **Tỷ lệ trung bình:** Dung môi này chiết được chất nhưng hiệu suất chưa tối ưu. Ông nên tăng tỷ lệ Ethanol hoặc giảm bớt Nước xem sao.")
-        else:
-            st.error("❌ **Hiệu suất quá thấp:** Dung môi quá phân cực hoặc quá kém phân cực so với chất. Khả năng cao chất sẽ bị lắng cặn, không chiết ra được.")
+            # 6. Lời khuyên thông minh
+            if score > 80:
+                st.balloons()
+                st.success("Tỷ lệ này cực kỳ tối ưu cho việc chiết xuất!")
+            elif score < 50:
+                st.error("Tỷ lệ này không hiệu quả, thử điều chỉnh lại để đưa điểm dung môi lại gần điểm mục tiêu.")
 # ==================== MODULE 6: MÔ PHỎNG ĐỘNG HỌC CHIẾT TÁCH (TOÁN ĐỒ THỊ) ====================
 elif page == "6. Động học Chiết tách (Toán)":
     st.title("📈 Mô phỏng Động học & Vận tốc Chiết tách")
